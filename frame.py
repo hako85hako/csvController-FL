@@ -7,10 +7,12 @@ import app
 from tkinter import messagebox
 import csv
 import sys
-
+import traceback
+import changeRW
 
 class TkinterClass:
     def __init__(self):
+        
         # ルートを作成
         root = Tk()
         # ''設定
@@ -66,7 +68,7 @@ class TkinterClass:
         button = ttk.Button(frame1, text='参照')
         button.bind('<ButtonPress>', self.file_dialog)
         button.grid(row=4, column=1,sticky=E)
-
+        
         self.file_name = tk.StringVar()
         self.file_name.set('未選択です')
         label4 = ttk.Label(frame1,textvariable=self.file_name,width=20)
@@ -186,23 +188,24 @@ class TkinterClass:
             text='空白',
             value='',
             variable=self.v3)
-
+    
         # Layout
         oprionFrame3.grid(row=7,column=1)
         label_frame3.grid(row=0, column=0)
         rb6.grid(row=0, column=0) # LabelFrame
         rb7.grid(row=0, column=1) # LabelFrame  
         rb8.grid(row=0, column=2) # LabelFrame        
-
+        
 ############################################################################################
         endform = ttk.Frame(frame1, padding=(0, 5))
         endform.grid(column=1, sticky=W)
-
+        
         button1 = ttk.Button(endform, text='OK')
         button1.bind('<ButtonPress>', self.createNewCSV)
         button1.pack(side=LEFT)
-
-        button2 = ttk.Button(endform, text='Cancel', command=sys.exit())
+        
+        
+        button2 = ttk.Button(endform, text='Cancel', command=sys.exit)
         button2.pack(side=LEFT)
         root.mainloop()
 
@@ -225,54 +228,50 @@ class TkinterClass:
             self.folder_name.set(folder_name)
 
     def createNewCSV(self, event):
+        error_flg = False
         ###################################################
         # 初期値の設定 #
         ###################################################
         #pathの指定
         #dataディレクトリの場所
-        dir_name = self.folder_name.get()+'/'
+        dir_name = self.folder_name.get()
         # dir_name = '/Users/sakaiyuunin/Documents/phython/csvController/'
         
         #入れ替えチャネルの指定
         ch_list_path = self.file_name.get()
-        with open(ch_list_path) as fp:
-            csvList = list(csv.reader(fp))
-        pre_ch_list = [item for subList in csvList for item in subList]
-        ch_list = []
-        for s in pre_ch_list:
-            if s == '' or s == '--':
-                ch_list += [s]
-            else:
-                ch_list += [int(s)]
-        #test_data
-        #ch_list = [1,2,3,4,5,6,7]
+        try:
+            ch_list = changeRW.changeRW(ch_list_path,offset)
+            print(ch_list)
+            #入れ替え時対象には入らない場所に格納する値の指定
+            none_select_column =  self.v2.get()
+            #none_select_column = '0'
+            
+            #入れ替え時対象の数値がnullの場合に格納する値の指定
+            none_valiable_column = self.v3.get()
+            #none_valiable_column = '-'
 
-        #入れ替え時対象には入らない場所に格納する値の指定
-        #none_select_column = '0'
-        none_select_column =  self.v2.get()
-        
-        #入れ替え時対象の数値がnullの場合に格納する値の指定
-        #none_valiable_column = '-'
-        none_valiable_column = self.v3.get()
+            #案件ID
+            id = self.username.get()
+            #id = 'FL999-99999_0000'
+            
+            #パスワード
+            password = self.passward.get()
+            #password = 'FL999-99999_0000'
 
-        #案件ID
-        # id = 'FL999-99999_0000'
-        id = self.username.get()
+            # オフセット指定
+            offset = self.v1.get()
+            #offset = 8
 
-        #パスワード
-        password = self.passward.get()
-        
-        # オフセット指定
-        offset = self.v1.get()
-
+        except:
+            error_flg = True
+            ex = traceback.format_exc()
+            messagebox.showerror('エラー', '設定が不正です。\n\n'+ex)
         ###################################################
         
         try:
-            print(ch_list)
-            app.main(dir_name,ch_list,none_select_column,none_valiable_column,offset,id,password)
-        except FileNotFoundError:
-            #メッセージボックス（エラー） 
-            messagebox.showerror('エラー', 'ファイル指定に問題が発生しました。')
+            if not error_flg:
+                #print(ch_list)
+                app.main(dir_name,ch_list,coefficient_1_list,coefficient_0_list,none_select_column,none_valiable_column,offset,id,password)
         except:
-            #メッセージボックス（エラー） 
-            messagebox.showerror('エラー', 'エラーが発生しました。')
+            ex = traceback.format_exc()
+            messagebox.showerror('エラー', '置換処理中にエラーが発生しました。\n\n'+ex)
